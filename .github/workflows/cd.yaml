@@ -33,7 +33,7 @@ jobs:
 
       - name: download artifact
         run: |
-          aws s3 cp ${{ inputs.artifact_s3_url }} .
+          aws s3 cp ${{ inputs.artifact_s3_uri }} .
       - name: unzip artifact
         run: unzip *.zip && rm *.zip
       - name: deploy to railway
