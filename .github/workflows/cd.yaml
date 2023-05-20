@@ -25,6 +25,12 @@ jobs:
         run: | 
           node --version
           npm i -g @railway/cli
+            - name: Configure AWS Credentials
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: eu-west-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: download artifact
         run: |
