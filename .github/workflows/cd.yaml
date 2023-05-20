@@ -6,7 +6,7 @@ on:
         description: url of the artifact to deploy
         type: text
       environment:
-        description: 'Environment to deploy
+        description: Environment to deploy
         type: choice
         required: true
         options:
