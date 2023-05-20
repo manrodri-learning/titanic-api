@@ -1,0 +1,38 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  test_and_security_gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install tox
+        run: pip install --user tox
+
+      - name: run test and checks
+        run: tox
+
+  build_artifact:
+    # at this point the artifact is just a compressed file
+    runs-on: ubuntu-latest
+    needs: test_and_security_gates
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: eu-west-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ID }}
+      - name: compress folder
+        run: |
+              GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+              tar -czvf titanic-api-${GIT_HASH}.tar.gz .
+              zip -r titanic-api-${GIT_HASH}.zip .
+
+      - name: Copy files to the test website with the AWS CLI
+        run: |
+            aws s3 cp titanic-api-${GIT_HASH}.zip s3://ml-model-packages/API/
+            aws s3 cpitanic-api-${GIT_HASH}.tar.gz s3://ml-model-packages/API/
+
+

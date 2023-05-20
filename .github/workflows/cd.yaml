@@ -1,0 +1,39 @@
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_url:
+        required: true
+        description: url of the artifact to deploy
+        type: text
+      environment:
+        description: 'Environment to deploy
+        type: choice
+        required: true
+        options:
+          - dev
+          - qa
+          - prod
+
+jobs:
+  log-the-inputs:
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      ENVIRONMENT: ${{ inputs.environment }}
+    steps:
+      - name: install railwaicli
+        run: | 
+          node --version
+          npm i -g @railway/cli
+
+      - name: deploy to railway
+        env:
+          RAILWAY_TOKEN: $ {{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Environment: $ENVIRONMENT"
+          railway up --detach
+          
+      
+
+        
+
