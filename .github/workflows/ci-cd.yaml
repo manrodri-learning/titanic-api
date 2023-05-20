@@ -1,0 +1,133 @@
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        type: choice
+        required: true
+        options:
+          - true
+          - false
+        description: weather do cd or not
+      environment:
+        description: Environment to deploy
+        type: choice
+        required: true
+        options:
+          - dev
+          - qa
+          - prod
+      artifact-type:
+        required: true
+        description: type of artifact to create and deploy
+        type: choice
+        options:
+          - docker
+          - zip-file
+
+
+jobs:
+  test_and_security_gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install tox
+        run: pip install --user tox
+
+      - name: run test and checks
+        run: tox
+
+  build_zip_artifact:
+    if: ${{ inputs.artifact-type == zip-file }}
+    runs-on: ubuntu-latest
+    needs: test_and_security_gates
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: eu-west-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: compress folder
+        run: |
+              GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+              echo "GIT_HASH=${GIT_HASH}" >> $GITHUB_ENV
+              echo "ARTIFACT_NAME=titanic-api-${GIT_HASH}.zip" >> $GITHUB_ENV
+              zip -r titanic-api-${GIT_HASH}.zip .
+      - uses: actions/upload-artifact@v3
+        with:
+          name: titanic-api-artifact
+          path: ${{ env.ARTIFACT_NAME }}
+
+      - name: Copy files to the test website with the AWS CLI
+        run: |
+            aws s3 cp ${{ env.ARTIFACT_NAME }} s3://ml-model-packages/API/
+
+  build_docker_artifact:
+    if: ${{ inputs.artifact-type == 'docker' }}
+    runs-on: ubuntu-latest
+    needs: test_and_security_gates
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v2
+      with:
+        images: manrodri/titanic-api
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+    cd:
+      if: ${{ deploy == 'true' }}
+      needs:
+        - test_and_security_gates
+        - build_docker_artifact
+
+      runs-on: ubuntu-latest
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        ENVIRONMENT: ${{ inputs.environment }}
+      steps:
+        - name: set node
+          uses: actions/setup-node@v1
+          with:
+            node-version: "18.x"
+        - name: install railwaicli
+          run: |
+            node --version
+            npm i -g @railway/cli
+            railway --version
+        - uses: aws-actions/configure-aws-credentials@v2
+          with:
+            aws-region: eu-west-1
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+        - name: download artifact
+          uses: actions/download-artifact@v2
+          with:
+            name: titanic-api-artifact
+        - name: unzip artifact
+          run: unzip *.zip && rm *.zip
+        - name: deploy to railway
+          run: railway up
+          env:
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
+
+
+
