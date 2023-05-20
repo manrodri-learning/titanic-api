@@ -42,12 +42,9 @@ jobs:
       - name: unzip artifact
         run: unzip *.zip && rm *.zip
       - name: deploy to railway
+        run: railway up
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          echo "Environment: $ENVIRONMENT"
-          RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }} railway up --detach
-          
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
       
 
         
