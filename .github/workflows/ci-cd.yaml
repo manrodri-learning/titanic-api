@@ -64,7 +64,7 @@ jobs:
             aws s3 cp ${{ env.ARTIFACT_NAME }} s3://ml-model-packages/API/
 
   build_docker_artifact:
-    if: ${{ inputs.artifact-type == 'docker' }}
+    if: ${{ inputs.artifact-type == docker }}
     runs-on: ubuntu-latest
     needs: test_and_security_gates
     steps:
@@ -92,8 +92,8 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
-    cd:
-      if: ${{ deploy == 'true' }}
+  cd:
+      if: ${{ inputs.deploy == true }}
       needs:
         - test_and_security_gates
         - build_docker_artifact
