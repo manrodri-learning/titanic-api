@@ -1,7 +1,7 @@
 on:
   workflow_dispatch:
     inputs:
-      artifact_url:
+      artifact_s3_uri:
         required: true
         description: url of the artifact to deploy
         type: text
@@ -26,6 +26,11 @@ jobs:
           node --version
           npm i -g @railway/cli
 
+      - name: download artifact
+        run: |
+          aws s3 cp ${{ inputs.artifact_s3_url }} .
+      - name: unzip artifact
+        run: unzip *.zip && rm *.zip
       - name: deploy to railway
         env:
           RAILWAY_TOKEN: $ {{ secrets.RAILWAY_TOKEN }}
