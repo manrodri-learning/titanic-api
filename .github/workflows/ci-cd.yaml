@@ -36,7 +36,7 @@ jobs:
         run: tox
 
   build_zip_artifact:
-    if: ${{ inputs.artifact-type == zip-file }}
+    if: ${{ inputs.artifact-type == "zip-file" }}
     runs-on: ubuntu-latest
     needs: test_and_security_gates
     steps:
@@ -64,7 +64,7 @@ jobs:
             aws s3 cp ${{ env.ARTIFACT_NAME }} s3://ml-model-packages/API/
 
   build_docker_artifact:
-    if: ${{ inputs.artifact-type == docker }}
+    if: ${{ inputs.artifact-type == "docker" }}
     runs-on: ubuntu-latest
     needs: test_and_security_gates
     steps:
@@ -93,7 +93,7 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
 
   cd:
-      if: ${{ inputs.deploy == true }}
+      if: ${{ inputs.deploy == "true" }}
       needs:
         - test_and_security_gates
         - build_docker_artifact
