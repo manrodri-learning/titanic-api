@@ -21,6 +21,10 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       ENVIRONMENT: ${{ inputs.environment }}
     steps:
+      - name: set node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "18.x"
       - name: install railwaicli
         run: | 
           node --version
@@ -42,7 +46,7 @@ jobs:
           RAILWAY_TOKEN: $ {{ secrets.RAILWAY_TOKEN }}
         run: |
           echo "Environment: $ENVIRONMENT"
-          railway up --detach
+          RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }} railway up --detach
           
       
 
