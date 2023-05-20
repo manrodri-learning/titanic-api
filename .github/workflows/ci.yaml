@@ -27,12 +27,16 @@ jobs:
       - name: compress folder
         run: |
               GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
-              tar -czvf titanic-api-${GIT_HASH}.tar.gz .
+              echo "GIT_HASH=${GIT_HASH}" >> $GITHUB_ENV
+              echo "ARTIFACT_NAME=titanic-api-${GIT_HASH}.zip" >> $GITHUB_ENV
               zip -r titanic-api-${GIT_HASH}.zip .
+      - uses: actions/upload-artifact@v3
+        with:
+          name: titanic-api-artifact
+          path: ${{ env.ARTIFACT_NAME }}
 
       - name: Copy files to the test website with the AWS CLI
         run: |
-            aws s3 cp titanic-api-${GIT_HASH}.zip s3://ml-model-packages/API/
-            aws s3 cpitanic-api-${GIT_HASH}.tar.gz s3://ml-model-packages/API/
+            aws s3 cp ${{ env.ARTIFACT_NAME }} s3://ml-model-packages/API/
 
 
