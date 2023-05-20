@@ -24,8 +24,7 @@ jobs:
       - name: install railwaicli
         run: | 
           node --version
-          npm i -g @railway/cli
-            - name: Configure AWS Credentials
+          npm i @railway/cli
       - uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: eu-west-1
