@@ -114,13 +114,17 @@ jobs:
             railway --version
 
         - name: download artifact
-          if: ${{ artifact-type == 'zip-file' }}
+          if: ${{ inputs.artifact-type == 'zip-file' }}
           uses: actions/download-artifact@v2
           with:
             name: titanic-api-artifact
         - name: unzip artifact
-          if: ${{ artifact-type == 'zip-file' }}
-          run: unzip *.zip && rm *.zip
+          if: ${{ inputs.artifact-type == 'zip-file' }}
+          run: unzip *.zip && rm *.zip && rm Dockerfile
+          # if a Dockerfile is found railway will deploy as a container
+        - name: checkout
+          uses: actions/checkout@3
+          if: ${{ inputs.artifact-type == 'docker' }}
         - name: deploy to railway
           # docker deploys in railway use Dockerfile to crate image then use their conatienr registry to deploy
           run: railway up
