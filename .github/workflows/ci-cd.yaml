@@ -123,7 +123,7 @@ jobs:
           run: unzip *.zip && rm *.zip && rm Dockerfile
           # if a Dockerfile is found railway will deploy as a container
         - name: checkout
-          uses: actions/checkout@3
+          uses: actions/checkout@v3
           if: ${{ inputs.artifact-type == 'docker' }}
         - name: deploy to railway
           # docker deploys in railway use Dockerfile to crate image then use their conatienr registry to deploy
